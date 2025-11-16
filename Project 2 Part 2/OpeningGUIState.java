@@ -6,35 +6,58 @@ public class OpeningGUIState implements State {
     @Override
     public JPanel getPanel(GUIContext context) {
 
-        JPanel panel = new JPanel(new GridLayout(4, 1, 10, 10));
+        JPanel panel = new JPanel(new GridLayout(5, 1, 10, 10));
 
         JLabel label = new JLabel("Warehouse Login System", JLabel.CENTER);
         panel.add(label);
-        
-        //Client Login
+
+        //CLIENT LOGIN
         JButton clientBtn = new JButton("Client Login");
         clientBtn.addActionListener(e -> {
-            String idStr = JOptionPane.showInputDialog("Enter Client ID:");
-            try {
-                int id = Integer.parseInt(idStr);
-                context.setClientID(id);
-                context.setState(new ClientMenuGUIState());
-            } catch (NumberFormatException ex) {
-                JOptionPane.showMessageDialog(panel, "Invalid ID!");
-            }
-        });
+            String input = JOptionPane.showInputDialog("Enter Client ID (e.g., C1):");
 
-        //Clerk Login
+            if (input == null) return;
+            input = input.trim();
+
+            if (!input.matches("C\\d+")) {
+                JOptionPane.showMessageDialog(panel, "Invalid Client ID format.");
+                return;
+            }
+
+            Client client = ClientDatabase.instance().search(input);
+            if (client == null) {
+                JOptionPane.showMessageDialog(panel, "Client not found.");
+                return;
+            }
+
+            int id = Integer.parseInt(input.substring(1));
+
+            context.setClientID(id);
+            context.setStartedFromClerk(false); 
+            context.setState(new ClientMenuGUIState());
+        });
+        panel.add(clientBtn);
+
+        //CLERK LOGIN
         JButton clerkBtn = new JButton("Clerk Login");
-        clerkBtn.addActionListener(e -> context.setState(new ClerkMenuGUIState()));
+        clerkBtn.addActionListener(e -> {
+            context.setClerkOrigin("Opening");
+            context.setState(new ClerkMenuGUIState());
+        });
         panel.add(clerkBtn);
 
-        //manager Login
+        //MANAGER LOGIN
         JButton managerBtn = new JButton("Manager Login");
-        managerBtn.addActionListener(e -> context.setState(new ManagerMenuGUIState()));
+        managerBtn.addActionListener(e -> {
+            context.setState(new ManagerMenuGUIState());
+        });
         panel.add(managerBtn);
 
-        panel.add(clientBtn);
+
+        //EXIT PROGRAM
+        JButton exitBtn = new JButton("Exit Program");
+        exitBtn.addActionListener(e -> System.exit(0));
+        panel.add(exitBtn);
 
         return panel;
     }
